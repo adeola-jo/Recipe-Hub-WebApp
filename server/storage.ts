@@ -63,7 +63,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
-    const [recipe] = await db.insert(recipes).values(insertRecipe).returning();
+    // Fix: Convert the insertRecipe to an array for drizzle-orm
+    const [recipe] = await db.insert(recipes).values([insertRecipe]).returning();
     return recipe;
   }
 
@@ -82,7 +83,7 @@ export class DatabaseStorage implements IStorage {
   async saveRecipe(insertSavedRecipe: InsertSavedRecipe): Promise<SavedRecipe> {
     const [savedRecipe] = await db
       .insert(savedRecipes)
-      .values(insertSavedRecipe)
+      .values([insertSavedRecipe])
       .returning();
     return savedRecipe;
   }
