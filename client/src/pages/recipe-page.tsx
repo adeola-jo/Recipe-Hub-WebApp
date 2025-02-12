@@ -18,6 +18,13 @@ export default function RecipePage() {
 
   const { data: recipe, isLoading: isLoadingRecipe } = useQuery<Recipe>({
     queryKey: ["/api/recipes", recipeId],
+    queryFn: async () => {
+      const response = await fetch(`/api/recipes/${recipeId}`);
+      if (!response.ok) {
+        throw new Error('Recipe not found');
+      }
+      return response.json();
+    },
     enabled: !!recipeId,
   });
 
