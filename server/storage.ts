@@ -20,6 +20,7 @@ export interface IStorage {
   getRecipes(): Promise<Recipe[]>;
   getRecipe(id: number): Promise<Recipe | undefined>;
   createRecipe(recipe: InsertRecipe): Promise<Recipe>;
+  clearRecipes(): Promise<void>;
 
   getSavedRecipes(userId: number): Promise<Recipe[]>;
   saveRecipe(savedRecipe: InsertSavedRecipe): Promise<SavedRecipe>;
@@ -63,9 +64,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
-    // Fix: Convert the insertRecipe to an array for drizzle-orm
-    const [recipe] = await db.insert(recipes).values([insertRecipe]).returning();
+    const [recipe] = await db.insert(recipes).values({
+      title: insertRecipe.title,
+      description: insertRecipe.description,
+      ingredients: insertRecipe.ingredients,
+      instructions: insertRecipe.instructions,
+      imageUrl: insertRecipe.imageUrl,
+      cuisine: insertRecipe.cuisine,
+      dietaryRestrictions: insertRecipe.dietaryRestrictions,
+      prepTime: insertRecipe.prepTime,
+      cookTime: insertRecipe.cookTime,
+      servings: insertRecipe.servings,
+      userId: insertRecipe.userId
+    }).returning();
     return recipe;
+  }
+
+  async clearRecipes(): Promise<void> {
+    await db.delete(recipes);
   }
 
   async getSavedRecipes(userId: number): Promise<Recipe[]> {
@@ -83,7 +99,10 @@ export class DatabaseStorage implements IStorage {
   async saveRecipe(insertSavedRecipe: InsertSavedRecipe): Promise<SavedRecipe> {
     const [savedRecipe] = await db
       .insert(savedRecipes)
-      .values([insertSavedRecipe])
+      .values({
+        userId: insertSavedRecipe.userId,
+        recipeId: insertSavedRecipe.recipeId
+      })
       .returning();
     return savedRecipe;
   }
