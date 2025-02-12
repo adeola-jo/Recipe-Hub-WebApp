@@ -14,10 +14,11 @@ export default function RecipePage() {
   const { user } = useAuth();
   const { id } = useParams();
   const { toast } = useToast();
-  const recipeId = parseInt(id);
+  const recipeId = id ? parseInt(id) : undefined;
 
   const { data: recipe, isLoading: isLoadingRecipe } = useQuery<Recipe>({
     queryKey: ["/api/recipes", recipeId],
+    enabled: !!recipeId, // Only run query if we have a valid ID
   });
 
   const { data: savedRecipes = [], isLoading: isLoadingSaved } = useQuery<Recipe[]>({
@@ -29,6 +30,7 @@ export default function RecipePage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!recipeId) throw new Error("Recipe ID is required");
       const res = await apiRequest("POST", `/api/saved-recipes/${recipeId}`);
       return res.json();
     },
@@ -43,6 +45,7 @@ export default function RecipePage() {
 
   const unsaveMutation = useMutation({
     mutationFn: async () => {
+      if (!recipeId) throw new Error("Recipe ID is required");
       await apiRequest("DELETE", `/api/saved-recipes/${recipeId}`);
     },
     onSuccess: () => {
@@ -62,7 +65,7 @@ export default function RecipePage() {
     );
   }
 
-  if (!recipe) {
+  if (!recipe || !recipeId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
@@ -77,7 +80,7 @@ export default function RecipePage() {
     );
   }
 
-  const totalTime = recipe.prepTime + recipe.cookTime;
+  const totalTime = (recipe.prepTime || 0) + (recipe.cookTime || 0);
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -149,7 +152,7 @@ export default function RecipePage() {
                   </div>
                 </div>
 
-                {recipe.dietaryRestrictions.length > 0 && (
+                {recipe.dietaryRestrictions && recipe.dietaryRestrictions.length > 0 && (
                   <div className="mb-6">
                     <h3 className="text-sm font-medium mb-2">Dietary Information</h3>
                     <div className="flex flex-wrap gap-2">
@@ -165,30 +168,34 @@ export default function RecipePage() {
                 <Separator className="my-6" />
 
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Ingredients</h3>
-                    <ul className="space-y-2">
-                      {recipe.ingredients.map((ingredient, index) => (
-                        <li key={index} className="text-sm">
-                          {ingredient}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {recipe.ingredients && recipe.ingredients.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Ingredients</h3>
+                      <ul className="space-y-2">
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <li key={index} className="text-sm">
+                            {ingredient}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Instructions</h3>
-                    <ol className="space-y-4">
-                      {recipe.instructions.map((instruction, index) => (
-                        <li key={index} className="text-sm flex gap-4">
-                          <span className="font-medium text-muted-foreground">
-                            {index + 1}.
-                          </span>
-                          {instruction}
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
+                  {recipe.instructions && recipe.instructions.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Instructions</h3>
+                      <ol className="space-y-4">
+                        {recipe.instructions.map((instruction, index) => (
+                          <li key={index} className="text-sm flex gap-4">
+                            <span className="font-medium text-muted-foreground">
+                              {index + 1}.
+                            </span>
+                            {instruction}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
