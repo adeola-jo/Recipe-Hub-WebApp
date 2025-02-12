@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertRecipeSchema } from "@shared/schema";
+import { scrapeRecipes } from "./utils/recipe-scraper";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -39,6 +40,45 @@ export function registerRoutes(app: Express): Server {
       userId: req.user.id,
     });
     res.status(201).json(recipe);
+  });
+
+  // New route for scraping recipes
+  app.post("/api/recipes/scrape", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      res.status(401).send("Unauthorized");
+      return;
+    }
+
+    try {
+      const { url } = req.body;
+      if (!url) {
+        res.status(400).send("URL is required");
+        return;
+      }
+
+      const scrapedRecipes = await scrapeRecipes(url);
+      const savedRecipes = [];
+
+      for (const recipeData of scrapedRecipes) {
+        const parseResult = insertRecipeSchema.safeParse({
+          ...recipeData,
+          userId: req.user.id,
+        });
+
+        if (parseResult.success) {
+          const recipe = await storage.createRecipe(parseResult.data);
+          savedRecipes.push(recipe);
+        }
+      }
+
+      res.json({
+        message: `Successfully scraped and saved ${savedRecipes.length} recipes`,
+        recipes: savedRecipes,
+      });
+    } catch (error) {
+      console.error('Error in recipe scraping:', error);
+      res.status(500).send("Failed to scrape recipes");
+    }
   });
 
   // Saved recipes routes
