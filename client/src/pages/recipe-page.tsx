@@ -18,7 +18,7 @@ export default function RecipePage() {
 
   const { data: recipe, isLoading: isLoadingRecipe } = useQuery<Recipe>({
     queryKey: ["/api/recipes", recipeId],
-    enabled: !!recipeId, // Only run query if we have a valid ID
+    enabled: !!recipeId,
   });
 
   const { data: savedRecipes = [], isLoading: isLoadingSaved } = useQuery<Recipe[]>({
