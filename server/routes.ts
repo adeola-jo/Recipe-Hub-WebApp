@@ -4,6 +4,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertRecipeSchema } from "@shared/schema";
 import { scrapeRecipes } from "./utils/recipe-scraper";
+import { sampleRecipes } from "./utils/seed-recipes";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -21,6 +22,39 @@ export function registerRoutes(app: Express): Server {
       return;
     }
     res.json(recipe);
+  });
+
+  // Special seeding endpoint for development
+  app.post("/api/seed-recipes", async (req, res) => {
+    try {
+      console.log("Starting recipe seeding process...");
+
+      // Clear existing recipes
+      await storage.clearRecipes();
+      console.log("Cleared existing recipes");
+
+      const savedRecipes = [];
+      for (const recipe of sampleRecipes) {
+        try {
+          const parseResult = insertRecipeSchema.safeParse(recipe);
+          if (parseResult.success) {
+            const savedRecipe = await storage.createRecipe(parseResult.data);
+            savedRecipes.push(savedRecipe);
+            console.log(`Created recipe: ${savedRecipe.title}`);
+          }
+        } catch (error) {
+          console.error(`Failed to create recipe ${recipe.title}:`, error);
+        }
+      }
+
+      res.json({
+        message: `Successfully seeded ${savedRecipes.length} recipes`,
+        recipes: savedRecipes
+      });
+    } catch (error) {
+      console.error("Failed during recipe seeding:", error);
+      res.status(500).json({ error: "Failed to seed recipes" });
+    }
   });
 
   app.post("/api/recipes", async (req, res) => {

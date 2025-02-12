@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 
-const sampleRecipes = [
+export const sampleRecipes = [
   {
     title: "Jollof Rice",
     description: "Classic West African rice dish cooked in seasoned tomato broth",
