@@ -8,9 +8,23 @@ import { Clock, Search, User, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 
+const CUISINE_TYPES = [
+  "All",
+  "African",
+  "European",
+  "Indian",
+  "Asian",
+  "Mediterranean",
+  "American",
+  "Middle Eastern",
+  "Caribbean",
+  "Latin American"
+];
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCuisine, setSelectedCuisine] = useState("All");
   const [_, setLocation] = useLocation();
 
   const { data: recipes = [], isLoading } = useQuery<Recipe[]>({
@@ -18,7 +32,9 @@ export default function HomePage() {
   });
 
   const filteredRecipes = recipes.filter((recipe) => {
-    if (!searchTerm.trim()) return true;
+    const matchesCuisine = selectedCuisine === "All" || recipe.cuisine === selectedCuisine;
+
+    if (!searchTerm.trim()) return matchesCuisine;
 
     const search = searchTerm.toLowerCase().trim();
     const searchableFields = [
@@ -29,12 +45,12 @@ export default function HomePage() {
       ...(recipe.ingredients || [])
     ].map(field => (field || "").toLowerCase());
 
-    return searchableFields.some(field => field.includes(search));
+    return matchesCuisine && searchableFields.some(field => field.includes(search));
   });
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Enhanced Header */}
+      {/* Header remains unchanged */}
       <header className="border-b bg-white/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -69,7 +85,7 @@ export default function HomePage() {
       </header>
 
       <main>
-        {/* Hero Section with Search */}
+        {/* Hero Section with Search and Cuisine Filter */}
         <div className="bg-gradient-to-b from-muted/50 to-background py-12">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto text-center mb-8">
@@ -77,16 +93,31 @@ export default function HomePage() {
                 Discover Amazing Recipes
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Find the perfect recipe for any occasion
+                Explore diverse cuisines from around the world
               </p>
-              <div className="relative max-w-xl mx-auto">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search recipes by title, ingredients, cuisine..."
-                  className="pl-10 h-12 text-lg"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="space-y-4">
+                <div className="relative max-w-xl mx-auto">
+                  <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search recipes by title, ingredients, cuisine..."
+                    className="pl-10 h-12 text-lg"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {CUISINE_TYPES.map((cuisine) => (
+                    <Button
+                      key={cuisine}
+                      variant={selectedCuisine === cuisine ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCuisine(cuisine)}
+                      className="min-w-[100px]"
+                    >
+                      {cuisine}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -112,13 +143,16 @@ export default function HomePage() {
                           alt={recipe.title}
                           className="w-full h-48 object-cover rounded-t-lg"
                         />
-                        {recipe.dietaryRestrictions && recipe.dietaryRestrictions.length > 0 && (
-                          <div className="absolute top-2 right-2">
-                            <div className="bg-primary/90 text-white text-xs px-2 py-1 rounded-full">
+                        <div className="absolute top-2 right-2">
+                          <div className="bg-primary/90 text-white text-xs px-2 py-1 rounded-full">
+                            {recipe.cuisine}
+                          </div>
+                          {recipe.dietaryRestrictions && recipe.dietaryRestrictions.length > 0 && (
+                            <div className="bg-secondary/90 text-white text-xs px-2 py-1 rounded-full mt-1">
                               {recipe.dietaryRestrictions[0]}
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                       <div className="p-6">
                         <h2 className="text-xl font-semibold mb-2 line-clamp-1">
@@ -134,7 +168,7 @@ export default function HomePage() {
                           </div>
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-1" />
-                            {recipe.cuisine}
+                            {recipe.servings} servings
                           </div>
                         </div>
                       </div>
