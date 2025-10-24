@@ -9,6 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/footer";
 
 export default function RecipePage() {
   const { user } = useAuth();
@@ -91,16 +92,16 @@ export default function RecipePage() {
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      <header className="bg-gradient-to-b from-muted/50 to-background">
-        <div className="container mx-auto px-4 py-6">
+      <div className="bg-gradient-to-b from-muted/50 to-background">
+        <div className="container mx-auto px-4 py-8">
           <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Recipes
           </Link>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{recipe.title}</h1>
-              <p className="text-muted-foreground">{recipe.description}</p>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-3">{recipe.title}</h1>
+              <p className="text-lg text-muted-foreground">{recipe.description}</p>
             </div>
             {user && (
               <Button
@@ -114,6 +115,7 @@ export default function RecipePage() {
                   }
                 }}
                 disabled={saveMutation.isPending || unsaveMutation.isPending}
+                className="shrink-0"
               >
                 {isSaved ? (
                   <BookmarkCheck className="h-5 w-5 mr-2" />
@@ -125,7 +127,7 @@ export default function RecipePage() {
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -235,6 +237,7 @@ export default function RecipePage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
